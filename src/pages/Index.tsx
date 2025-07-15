@@ -135,11 +135,11 @@ const Index = () => {
               </div>
             </div>
 
-            {/* First Line - Controls Row */}
-            <div className="grid lg:grid-cols-3 gap-6 mb-6">
+            {/* Row 1: Data Controls - 3 equal columns */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
               {/* Data Filters */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-foreground">Data Filters</h3>
                   <Button
                     variant="outline"
@@ -159,20 +159,20 @@ const Index = () => {
               </div>
 
               {/* Chart Customization */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Chart Customization</h3>
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Chart Customization</h3>
                 <div className="h-[400px] flex items-center justify-center bg-gradient-card border border-border/50 rounded-lg">
-                  <p className="text-muted-foreground">Chart customization controls will be integrated here</p>
+                  <p className="text-muted-foreground text-center">Chart customization controls<br/>will be integrated here</p>
                 </div>
               </div>
 
               {/* Upload New Dataset */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-foreground">Dataset Management</h3>
-                <div className="bg-gradient-card border border-border/50 rounded-lg p-6 text-center">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground mb-4">Dataset Management</h3>
+                <div className="bg-gradient-card border border-border/50 rounded-lg p-6 text-center h-[400px] flex flex-col justify-center">
                   <Button
                     variant="default"
-                    className="w-full mb-4 bg-gradient-primary"
+                    className="w-full mb-6 bg-gradient-primary"
                     onClick={() => {
                       setOriginalData([]);
                       setFilteredData([]);
@@ -182,20 +182,31 @@ const Index = () => {
                   >
                     Upload New Dataset
                   </Button>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <p>Current: {fileName}</p>
-                    <p>{filteredData.length} of {originalData.length} rows</p>
-                    <p>{columns.length} columns</p>
+                  <div className="space-y-3 text-sm text-muted-foreground">
+                    <div className="p-3 bg-secondary/20 rounded-lg">
+                      <p className="font-medium">Current Dataset:</p>
+                      <p className="truncate" title={fileName}>{fileName}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 bg-primary/10 rounded text-center">
+                        <p className="font-bold text-foreground">{filteredData.length.toLocaleString()}</p>
+                        <p className="text-xs">Filtered Rows</p>
+                      </div>
+                      <div className="p-2 bg-accent/10 rounded text-center">
+                        <p className="font-bold text-foreground">{columns.length}</p>
+                        <p className="text-xs">Columns</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Second Line - Analysis Row */}
-            <div className="grid lg:grid-cols-2 gap-6">
+            {/* Row 2: Analysis - 2 columns */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Interactive Charts */}
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-foreground">Interactive Charts</h3>
                   <Badge variant="secondary" className="text-xs">
                     Real-time Updates
@@ -210,8 +221,8 @@ const Index = () => {
               </div>
 
               {/* AI Assistant */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-foreground">AI Assistant</h3>
                   <Badge variant="default" className="text-xs bg-gradient-primary">
                     Powered by Gemini
