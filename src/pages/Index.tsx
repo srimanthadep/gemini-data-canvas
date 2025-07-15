@@ -135,12 +135,12 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Main Dashboard Content */}
-            <div className="grid lg:grid-cols-12 gap-6">
-              {/* Left Panel - Filters & Controls */}
-              <div className="lg:col-span-3 space-y-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">Data Controls</h3>
+            {/* First Line - Controls Row */}
+            <div className="grid lg:grid-cols-3 gap-6 mb-6">
+              {/* Data Filters */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">Data Filters</h3>
                   <Button
                     variant="outline"
                     size="sm"
@@ -156,26 +156,49 @@ const Index = () => {
                   columns={columns} 
                   onFilterChange={handleFilterChange}
                 />
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setOriginalData([]);
-                    setFilteredData([]);
-                    setFileName('');
-                    setColumns([]);
-                  }}
-                >
-                  Upload New Dataset
-                </Button>
               </div>
 
-              {/* Center Panel - Visualizations */}
-              <div className="lg:col-span-6 space-y-6">
+              {/* Chart Customization */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Chart Customization</h3>
+                <div className="h-[400px] flex items-center justify-center bg-gradient-card border border-border/50 rounded-lg">
+                  <p className="text-muted-foreground">Chart customization controls will be integrated here</p>
+                </div>
+              </div>
+
+              {/* Upload New Dataset */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-foreground">Dataset Management</h3>
+                <div className="bg-gradient-card border border-border/50 rounded-lg p-6 text-center">
+                  <Button
+                    variant="default"
+                    className="w-full mb-4 bg-gradient-primary"
+                    onClick={() => {
+                      setOriginalData([]);
+                      setFilteredData([]);
+                      setFileName('');
+                      setColumns([]);
+                    }}
+                  >
+                    Upload New Dataset
+                  </Button>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>Current: {fileName}</p>
+                    <p>{filteredData.length} of {originalData.length} rows</p>
+                    <p>{columns.length} columns</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Second Line - Analysis Row */}
+            <div className="grid lg:grid-cols-2 gap-6">
+              {/* Interactive Charts */}
+              <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">Data Visualization</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Interactive Charts</h3>
                   <Badge variant="secondary" className="text-xs">
-                    Interactive Charts
+                    Real-time Updates
                   </Badge>
                 </div>
                 <DataVisualization data={filteredData} columns={columns} />
@@ -186,9 +209,9 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* Right Panel - AI Assistant */}
-              <div className="lg:col-span-3">
-                <div className="flex items-center justify-between mb-4">
+              {/* AI Assistant */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-foreground">AI Assistant</h3>
                   <Badge variant="default" className="text-xs bg-gradient-primary">
                     Powered by Gemini
