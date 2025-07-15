@@ -83,6 +83,17 @@ const Index = () => {
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <footer className="border-t border-border/50 bg-gradient-card mt-16">
+        <div className="container mx-auto px-4 py-6">
+          <div className="text-center text-muted-foreground">
+            <p className="text-sm">
+              © {new Date().getFullYear()} Srimanth Adep. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
