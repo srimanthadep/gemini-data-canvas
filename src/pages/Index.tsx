@@ -135,12 +135,12 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Row 1: Data Controls - 3 equal columns */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-              {/* Data Filters */}
-              <div>
+            {/* Main Dashboard Content */}
+            <div className="grid lg:grid-cols-12 gap-6">
+              {/* Left Panel - Filters & Controls */}
+              <div className="lg:col-span-3 space-y-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">Data Filters</h3>
+                  <h3 className="text-lg font-semibold text-foreground">Data Controls</h3>
                   <Button
                     variant="outline"
                     size="sm"
@@ -156,60 +156,26 @@ const Index = () => {
                   columns={columns} 
                   onFilterChange={handleFilterChange}
                 />
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    setOriginalData([]);
+                    setFilteredData([]);
+                    setFileName('');
+                    setColumns([]);
+                  }}
+                >
+                  Upload New Dataset
+                </Button>
               </div>
 
-              {/* Chart Customization */}
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-4">Chart Customization</h3>
-                <div className="h-[400px] flex items-center justify-center bg-gradient-card border border-border/50 rounded-lg">
-                  <p className="text-muted-foreground text-center">Chart customization controls<br/>will be integrated here</p>
-                </div>
-              </div>
-
-              {/* Upload New Dataset */}
-              <div>
-                <h3 className="text-lg font-semibold text-foreground mb-4">Dataset Management</h3>
-                <div className="bg-gradient-card border border-border/50 rounded-lg p-6 text-center h-[400px] flex flex-col justify-center">
-                  <Button
-                    variant="default"
-                    className="w-full mb-6 bg-gradient-primary"
-                    onClick={() => {
-                      setOriginalData([]);
-                      setFilteredData([]);
-                      setFileName('');
-                      setColumns([]);
-                    }}
-                  >
-                    Upload New Dataset
-                  </Button>
-                  <div className="space-y-3 text-sm text-muted-foreground">
-                    <div className="p-3 bg-secondary/20 rounded-lg">
-                      <p className="font-medium">Current Dataset:</p>
-                      <p className="truncate" title={fileName}>{fileName}</p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="p-2 bg-primary/10 rounded text-center">
-                        <p className="font-bold text-foreground">{filteredData.length.toLocaleString()}</p>
-                        <p className="text-xs">Filtered Rows</p>
-                      </div>
-                      <div className="p-2 bg-accent/10 rounded text-center">
-                        <p className="font-bold text-foreground">{columns.length}</p>
-                        <p className="text-xs">Columns</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Row 2: Analysis - 2 columns */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Interactive Charts */}
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">Interactive Charts</h3>
+              {/* Center Panel - Visualizations */}
+              <div className="lg:col-span-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">Data Visualization</h3>
                   <Badge variant="secondary" className="text-xs">
-                    Real-time Updates
+                    Interactive Charts
                   </Badge>
                 </div>
                 <DataVisualization data={filteredData} columns={columns} />
@@ -220,8 +186,8 @@ const Index = () => {
                 </div>
               </div>
 
-              {/* AI Assistant */}
-              <div>
+              {/* Right Panel - AI Assistant */}
+              <div className="lg:col-span-3">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-foreground">AI Assistant</h3>
                   <Badge variant="default" className="text-xs bg-gradient-primary">
