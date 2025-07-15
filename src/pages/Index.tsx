@@ -2,18 +2,44 @@ import { useState } from 'react';
 import { FileUpload } from '@/components/FileUpload';
 import { DataSummary } from '@/components/DataSummary';
 import { DataVisualization } from '@/components/DataVisualization';
+import { DataFilter } from '@/components/DataFilter';
 import { ChatInterface } from '@/components/ChatInterface';
-import { Brain, BarChart3 } from 'lucide-react';
+import { Brain, BarChart3, Filter, Download } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
-  const [data, setData] = useState<any[]>([]);
+  const [originalData, setOriginalData] = useState<any[]>([]);
+  const [filteredData, setFilteredData] = useState<any[]>([]);
   const [fileName, setFileName] = useState<string>('');
   const [columns, setColumns] = useState<string[]>([]);
 
   const handleFileUpload = (uploadedData: any[], uploadedFileName: string) => {
-    setData(uploadedData);
+    setOriginalData(uploadedData);
+    setFilteredData(uploadedData);
     setFileName(uploadedFileName);
     setColumns(uploadedData.length > 0 ? Object.keys(uploadedData[0]) : []);
+  };
+
+  const handleFilterChange = (newFilteredData: any[]) => {
+    setFilteredData(newFilteredData);
+  };
+
+  const exportData = (format: string) => {
+    if (format === 'csv') {
+      const csvContent = [
+        columns.join(','),
+        ...filteredData.map(row => columns.map(col => `"${row[col]}"`).join(','))
+      ].join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${fileName.replace('.csv', '')}_filtered.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
   return (
@@ -39,7 +65,7 @@ const Index = () => {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {!data.length ? (
+      {!originalData.length ? (
           /* Upload State */
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
@@ -54,35 +80,64 @@ const Index = () => {
             <FileUpload onFileUpload={handleFileUpload} />
           </div>
         ) : (
-          /* Dashboard State */
-          <div className="space-y-8">
-            <div className="flex items-center justify-between">
+          /* Comprehensive Dashboard State */
+          <div className="space-y-6">
+            {/* Dashboard Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <div>
-                <h2 className="text-3xl font-bold text-foreground">Dashboard</h2>
-                <p className="text-muted-foreground">Analyzing: {fileName}</p>
+                <h2 className="text-3xl font-bold text-foreground">Analytics Dashboard</h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge variant="outline">Dataset: {fileName}</Badge>
+                  <Badge variant="secondary">
+                    {filteredData.length} of {originalData.length} rows
+                  </Badge>
+                </div>
               </div>
-              <button
-                onClick={() => {
-                  setData([]);
-                  setFileName('');
-                  setColumns([]);
-                }}
-                className="px-4 py-2 text-sm bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
-              >
-                Upload New Dataset
-              </button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => exportData('csv')}
+                  className="flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  Export CSV
+                </Button>
+                <Button
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setOriginalData([]);
+                    setFilteredData([]);
+                    setFileName('');
+                    setColumns([]);
+                  }}
+                >
+                  Upload New Dataset
+                </Button>
+              </div>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-8">
-              {/* Left Column - Summary & Visualizations */}
-              <div className="lg:col-span-2 space-y-8">
-                <DataSummary data={data} columns={columns} />
-                <DataVisualization data={data} columns={columns} />
+            {/* Main Dashboard Grid */}
+            <div className="grid lg:grid-cols-4 gap-6">
+              {/* Left Sidebar - Filters */}
+              <div className="lg:col-span-1 space-y-4">
+                <DataFilter 
+                  data={originalData} 
+                  columns={columns} 
+                  onFilterChange={handleFilterChange}
+                />
               </div>
 
-              {/* Right Column - Chat Interface */}
+              {/* Main Content Area */}
+              <div className="lg:col-span-2 space-y-6">
+                <DataSummary data={filteredData} columns={columns} />
+                <DataVisualization data={filteredData} columns={columns} />
+              </div>
+
+              {/* Right Sidebar - AI Chat */}
               <div className="lg:col-span-1">
-                <ChatInterface data={data} dataColumns={columns} />
+                <ChatInterface data={filteredData} dataColumns={columns} />
               </div>
             </div>
           </div>
