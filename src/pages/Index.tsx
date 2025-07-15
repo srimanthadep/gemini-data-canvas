@@ -21,13 +21,18 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-border/50 bg-gradient-card shadow-card">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
-              <Brain className="w-6 h-6 text-primary-foreground" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center">
+                <Brain className="w-6 h-6 text-primary-foreground" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">AI Analytics Platform</h1>
+                <p className="text-muted-foreground">Intelligent data analysis with conversational insights</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">AI Analytics Platform</h1>
-              <p className="text-muted-foreground">Intelligent data analysis with conversational insights</p>
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">by Srimanth Adep</p>
             </div>
           </div>
         </div>
