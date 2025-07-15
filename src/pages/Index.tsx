@@ -80,32 +80,85 @@ const Index = () => {
             <FileUpload onFileUpload={handleFileUpload} />
           </div>
         ) : (
-          /* Comprehensive Dashboard State */
+          /* Enhanced Analytics Dashboard */
           <div className="space-y-6">
-            {/* Dashboard Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-3xl font-bold text-foreground">Analytics Dashboard</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <Badge variant="outline">Dataset: {fileName}</Badge>
-                  <Badge variant="secondary">
-                    {filteredData.length} of {originalData.length} rows
-                  </Badge>
+            {/* Dashboard Header with KPIs */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-gradient-card border border-border/50 rounded-lg p-4 shadow-card">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <BarChart3 className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Rows</p>
+                    <p className="text-2xl font-bold text-foreground">{originalData.length.toLocaleString()}</p>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
+              
+              <div className="bg-gradient-card border border-border/50 rounded-lg p-4 shadow-card">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                    <Filter className="w-5 h-5 text-accent" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Filtered Rows</p>
+                    <p className="text-2xl font-bold text-foreground">{filteredData.length.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-card border border-border/50 rounded-lg p-4 shadow-card">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-success/20 flex items-center justify-center">
+                    <Brain className="w-5 h-5 text-success" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Columns</p>
+                    <p className="text-2xl font-bold text-foreground">{columns.length}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-gradient-card border border-border/50 rounded-lg p-4 shadow-card">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center">
+                    <Download className="w-5 h-5 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Dataset</p>
+                    <p className="text-lg font-semibold text-foreground truncate" title={fileName}>
+                      {fileName.length > 12 ? `${fileName.substring(0, 12)}...` : fileName}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Dashboard Content */}
+            <div className="grid lg:grid-cols-12 gap-6">
+              {/* Left Panel - Filters & Controls */}
+              <div className="lg:col-span-3 space-y-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">Data Controls</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => exportData('csv')}
+                    className="flex items-center gap-1"
+                  >
+                    <Download className="w-3 h-3" />
+                    Export
+                  </Button>
+                </div>
+                <DataFilter 
+                  data={originalData} 
+                  columns={columns} 
+                  onFilterChange={handleFilterChange}
+                />
                 <Button
                   variant="outline"
-                  size="sm"
-                  onClick={() => exportData('csv')}
-                  className="flex items-center gap-2"
-                >
-                  <Download className="w-4 h-4" />
-                  Export CSV
-                </Button>
-                <Button
-                  variant="outline" 
-                  size="sm"
+                  className="w-full"
                   onClick={() => {
                     setOriginalData([]);
                     setFilteredData([]);
@@ -116,27 +169,31 @@ const Index = () => {
                   Upload New Dataset
                 </Button>
               </div>
-            </div>
 
-            {/* Main Dashboard Grid */}
-            <div className="grid lg:grid-cols-4 gap-6">
-              {/* Left Sidebar - Filters */}
-              <div className="lg:col-span-1 space-y-4">
-                <DataFilter 
-                  data={originalData} 
-                  columns={columns} 
-                  onFilterChange={handleFilterChange}
-                />
-              </div>
-
-              {/* Main Content Area */}
-              <div className="lg:col-span-2 space-y-6">
-                <DataSummary data={filteredData} columns={columns} />
+              {/* Center Panel - Visualizations */}
+              <div className="lg:col-span-6 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">Data Visualization</h3>
+                  <Badge variant="secondary" className="text-xs">
+                    Interactive Charts
+                  </Badge>
+                </div>
                 <DataVisualization data={filteredData} columns={columns} />
+                
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Statistical Summary</h3>
+                  <DataSummary data={filteredData} columns={columns} />
+                </div>
               </div>
 
-              {/* Right Sidebar - AI Chat */}
-              <div className="lg:col-span-1">
+              {/* Right Panel - AI Assistant */}
+              <div className="lg:col-span-3">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-foreground">AI Assistant</h3>
+                  <Badge variant="default" className="text-xs bg-gradient-primary">
+                    Powered by Gemini
+                  </Badge>
+                </div>
                 <ChatInterface data={filteredData} dataColumns={columns} />
               </div>
             </div>
