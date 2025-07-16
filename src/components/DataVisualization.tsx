@@ -6,10 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { ChartCustomization } from './ChartCustomization';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { Skeleton } from './ui/skeleton';
+import { BarChart3, FileWarning } from 'lucide-react';
 
 interface DataVisualizationProps {
   data: any[];
   columns: string[];
+  loading?: boolean;
 }
 
 const COLOR_THEMES = {
@@ -19,7 +22,7 @@ const COLOR_THEMES = {
   vibrant: ['hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))']
 };
 
-export function DataVisualization({ data, columns }: DataVisualizationProps) {
+export function DataVisualization({ data, columns, loading = false }: DataVisualizationProps) {
   const [chartType, setChartType] = useState('bar');
   const [colorTheme, setColorTheme] = useState('primary');
   const [chartSize, setChartSize] = useState(400);
@@ -104,11 +107,31 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
     }
   };
 
+  if (loading) {
+    return (
+      <Card className="p-8 bg-gradient-card border-border/50 shadow-card">
+        <div className="mb-4 flex flex-col gap-2">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-5 w-32 mb-2" />
+        </div>
+        <div className="flex items-center justify-between mb-4">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-8 w-40" />
+        </div>
+        <div className="bg-white rounded-lg p-4 flex items-center justify-center" style={{ width: 800, height: 400 }}>
+          <Skeleton className="w-full h-72" />
+        </div>
+      </Card>
+    );
+  }
+
   if (!analysis || !data.length) {
     return (
       <Card className="p-8 bg-gradient-card border-border/50 shadow-card">
-        <div className="text-center text-muted-foreground">
-          <p>Upload a dataset to see visualizations</p>
+        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+          <BarChart3 className="w-12 h-12 mb-4 text-warning" />
+          <p className="text-lg font-semibold mb-2">No data to visualize</p>
+          <p className="text-sm">Upload a dataset to see visualizations here.</p>
         </div>
       </Card>
     );
@@ -146,6 +169,7 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
                 dataKey={analysis.yAxis}
                 fill={currentColors[0]}
                 radius={[4, 4, 0, 0]}
+                activeBar={{ fill: currentColors[0] }}
               />
             </BarChart>
           </ResponsiveContainer>
@@ -306,13 +330,12 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
             onExportChart={handleExportChart}
           />
         </div>
-        <div ref={chartRef} className="bg-white rounded-lg p-4 flex items-center justify-center" style={{ width: exporting ? 800 : '100%', height: exporting ? 400 : chartSize }}>
-          <div className="w-full">
-            {chartTitle && (
-              <div className="text-center text-lg font-bold mb-2 text-foreground">{chartTitle}</div>
-            )}
-            {renderChart({ xAxisLabel, yAxisLabel })}
-          </div>
+        {/* In the chart area, set the background to match the app background */}
+        <div className="bg-background p-8 flex flex-col items-center justify-center min-h-[350px]">
+          {chartTitle && (
+            <div className="text-center text-lg font-bold mb-2 text-foreground">{chartTitle}</div>
+          )}
+          {renderChart({ xAxisLabel, yAxisLabel })}
         </div>
       </Card>
     </div>

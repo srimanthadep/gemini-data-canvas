@@ -126,3 +126,21 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom scrollbar for Numeric Column Statistics */
+.numeric-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  border-radius: 16px;
+}
+.numeric-scrollbar::-webkit-scrollbar-thumb {
+  background: #3b82f6; /* Tailwind primary-500 */
+  border-radius: 16px;
+}
+.numeric-scrollbar::-webkit-scrollbar-track {
+  background: #374151; /* Tailwind gray-700 */
+  border-radius: 16px;
+}
+.numeric-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #3b82f6 #374151;
+}

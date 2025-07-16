@@ -1,14 +1,16 @@
 import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, BarChart3, PieChart, Database, Hash } from 'lucide-react';
+import { TrendingUp, TrendingDown, BarChart3, PieChart, Database, Hash, FileWarning } from 'lucide-react';
+import { Skeleton } from './ui/skeleton';
 
 interface DataSummaryProps {
   data: any[];
   columns: string[];
+  loading?: boolean;
 }
 
-export function DataSummary({ data, columns }: DataSummaryProps) {
+export function DataSummary({ data, columns, loading = false }: DataSummaryProps) {
   const summary = useMemo(() => {
     if (!data.length) return null;
 
@@ -49,12 +51,54 @@ export function DataSummary({ data, columns }: DataSummaryProps) {
     };
   }, [data, columns]);
 
+  if (loading) {
+    return (
+      <div className="w-full flex flex-col gap-6">
+        <div className="flex flex-col lg:flex-row gap-6 w-full">
+          {Array.from({ length: 2 }).map((_, idx) => (
+            <Card key={idx} className="p-6 bg-gradient-card border-border/50 shadow-card flex-1 w-full flex-grow">
+              <Skeleton className="h-6 w-40 mb-4" />
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div className="text-center" key={i}>
+                    <Skeleton className="w-8 h-8 mx-auto mb-2 rounded-full" />
+                    <Skeleton className="h-6 w-16 mx-auto mb-1" />
+                    <Skeleton className="h-4 w-20 mx-auto" />
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
+        <Card className="p-6 bg-gradient-card border-border/50 shadow-card w-full flex-1 flex-grow">
+          <Skeleton className="h-6 w-40 mb-4" />
+          <div className="grid gap-4">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="border border-border/30 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <Skeleton className="h-5 w-24" />
+                  <Skeleton className="h-5 w-16" />
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  {Array.from({ length: 4 }).map((_, j) => (
+                    <Skeleton key={j} className="h-4 w-16" />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   if (!summary) {
     return (
       <Card className="p-6 bg-gradient-card border-border/50 shadow-card">
-        <div className="text-center text-muted-foreground">
-          <Database className="w-12 h-12 mx-auto mb-2 opacity-50" />
-          <p>Upload a dataset to see summary statistics</p>
+        <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+          <FileWarning className="w-12 h-12 mb-4 text-warning" />
+          <p className="text-lg font-semibold mb-2">No summary available</p>
+          <p className="text-sm">Upload a dataset to see summary statistics here.</p>
         </div>
       </Card>
     );
@@ -110,45 +154,41 @@ export function DataSummary({ data, columns }: DataSummaryProps) {
         )}
       </div>
       {/* Numeric stats: ensure this is outside the flex row and takes full width */}
-      {Object.keys(summary.numericStats).length > 0 && (
-        <Card className="p-6 bg-gradient-card border-border/50 shadow-card w-full flex-1 flex-grow">
-            <h3 className="text-xl font-semibold text-foreground mb-4">Numeric Column Statistics</h3>
-            <div className="grid gap-4">
-              {Object.entries(summary.numericStats).map(([column, stats]: [string, any]) => (
-                <div key={column} className="border border-border/30 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-semibold text-foreground">{column}</h4>
-                    <Badge variant="outline">Numeric</Badge>
-                  </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                    <div>
-                      <div className="text-muted-foreground">Average</div>
-                      <div className="font-medium text-foreground">{stats.avg}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground flex items-center gap-1">
-                        <TrendingDown className="w-3 h-3" />
-                        Min
-                      </div>
-                      <div className="font-medium text-foreground">{stats.min}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground flex items-center gap-1">
-                        <TrendingUp className="w-3 h-3" />
-                        Max
-                      </div>
-                      <div className="font-medium text-foreground">{stats.max}</div>
-                    </div>
-                    <div>
-                      <div className="text-muted-foreground">Sum</div>
-                      <div className="font-medium text-foreground">{stats.sum.toLocaleString()}</div>
-                    </div>
-                  </div>
+      {/* Numeric Column Statistics Card (modern, focused design, vertical stack) */}
+      <Card className="p-6 bg-gradient-card border-border/50 shadow-card flex flex-col items-center text-center">
+        <BarChart3 className="w-10 h-10 text-accent mb-2" />
+        <h2 className="text-xl font-bold text-foreground mb-4">Numeric Column Statistics</h2>
+        <div className="flex flex-col gap-4 w-full max-h-96 overflow-y-auto pr-2 numeric-scrollbar">
+          {Object.entries(summary.numericStats).length === 0 ? (
+            <span className="text-muted-foreground text-sm">No numeric columns</span>
+          ) : (
+            Object.entries(summary.numericStats).map(([column, stats]: [string, any]) => (
+              <div key={column} className="mb-2 bg-background rounded-xl shadow-card p-4 flex flex-col gap-2 border border-border/30">
+                <div className="font-semibold text-foreground mb-1 text-lg">{column}</div>
+                <div className="flex flex-wrap gap-3">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-success/10 text-success text-xs font-semibold">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 20V4m0 0l-4 4m4-4l4 4" /></svg>
+                    Avg: {stats.avg}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" /></svg>
+                    Min: {stats.min}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-destructive/10 text-destructive text-xs font-semibold">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                    Max: {stats.max}
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-muted/10 text-muted-foreground text-xs font-semibold">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /></svg>
+                    Sum: {stats.sum.toLocaleString()}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </Card>
-      )}
+              </div>
+            ))
+          )}
+        </div>
+      </Card>
+      {/* Custom scrollbar styles for .numeric-scrollbar are defined in src/index.css */}
     </div>
   );
 }

@@ -59,47 +59,61 @@ export function ChartCustomization({
           <Settings className="w-5 h-5 text-primary" />
           <h3 className="font-semibold text-foreground">Chart Customization</h3>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          {isOpen ? 'Hide' : 'Show'} Controls
-        </Button>
       </div>
 
       {isOpen && (
-        <div className="space-y-6">
-          {/* Chart Type Selection */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-3 block">Chart Type</label>
-            <div className="grid grid-cols-2 gap-2">
-              {CHART_TYPES.map((type) => {
-                const Icon = type.icon;
-                return (
-                  <Button
-                    key={type.value}
-                    variant={chartType === type.value ? "default" : "outline"}
-                    className={`justify-start ${chartType === type.value ? 'bg-gradient-primary' : ''}`}
-                    onClick={() => onChartTypeChange(type.value)}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {type.label}
-                  </Button>
-                );
-              })}
-            </div>
-          </div>
+        <div className="flex justify-end mb-2">
+          <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>
+            Hide Controls
+          </Button>
+        </div>
+      )}
 
-          <Separator />
-
-          {/* Data Mapping */}
-          <div className="grid grid-cols-2 gap-4">
+      {isOpen && (
+        <div className="mt-4 w-full">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+            {/* Chart Type */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">X-Axis</label>
+              <label className="block text-sm font-medium mb-1 text-foreground">Chart Type</label>
+              <Select value={chartType} onValueChange={onChartTypeChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select chart type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bar">Bar</SelectItem>
+                  <SelectItem value="line">Line</SelectItem>
+                  <SelectItem value="area">Area</SelectItem>
+                  <SelectItem value="pie">Pie</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Color Theme */}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-foreground">Color Theme</label>
+              <Select value={colorTheme} onValueChange={onColorThemeChange}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select color theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="primary">Primary</SelectItem>
+                  <SelectItem value="gradient">Gradient</SelectItem>
+                  <SelectItem value="professional">Professional</SelectItem>
+                  <SelectItem value="vibrant">Vibrant</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Chart Size */}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-foreground">Chart Size</label>
+              <Slider min={200} max={800} step={50} value={[chartSize]} onValueChange={([v]) => onChartSizeChange(v)} className="w-full" />
+              <div className="text-xs text-muted-foreground mt-1">{chartSize}px</div>
+            </div>
+            {/* X Axis */}
+            <div>
+              <label className="block text-sm font-medium mb-1 text-foreground">X Axis</label>
               <Select value={selectedXAxis} onValueChange={onXAxisChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select column" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select X axis" />
                 </SelectTrigger>
                 <SelectContent>
                   {columns.map((col) => (
@@ -108,11 +122,12 @@ export function ChartCustomization({
                 </SelectContent>
               </Select>
             </div>
+            {/* Y Axis */}
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">Y-Axis</label>
+              <label className="block text-sm font-medium mb-1 text-foreground">Y Axis</label>
               <Select value={selectedYAxis} onValueChange={onYAxisChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select column" />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Y axis" />
                 </SelectTrigger>
                 <SelectContent>
                   {columns.map((col) => (
@@ -121,90 +136,36 @@ export function ChartCustomization({
                 </SelectContent>
               </Select>
             </div>
-          </div>
-
-          <Separator />
-
-          {/* Color Theme */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-3 block">Color Theme</label>
-            <div className="space-y-2">
-              {COLOR_THEMES.map((theme) => (
-                <div
-                  key={theme.value}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                    colorTheme === theme.value 
-                      ? 'border-primary bg-primary/10' 
-                      : 'border-border/50 hover:border-primary/50'
-                  }`}
-                  onClick={() => onColorThemeChange(theme.value)}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">{theme.label}</span>
-                    <div className="flex gap-1">
-                      {theme.colors.map((color, index) => (
-                        <div
-                          key={index}
-                          className="w-4 h-4 rounded-full border border-border/30"
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              ))}
+            {/* Export Chart */}
+            <div className="flex flex-col gap-2">
+              <label className="block text-sm font-medium mb-1 text-foreground">Export</label>
+              <Button variant="outline" size="sm" onClick={() => onExportChart('png')}>Export PNG</Button>
+              <Button variant="outline" size="sm" onClick={() => onExportChart('pdf')}>Export PDF</Button>
             </div>
           </div>
-
-          <Separator />
-
-          {/* Chart Size */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-3 block">
-              Chart Height: {chartSize}px
-            </label>
-            <Slider
-              value={[chartSize]}
-              onValueChange={(value) => onChartSizeChange(value[0])}
-              max={800}
-              min={300}
-              step={50}
-              className="w-full"
-            />
+        </div>
+      )}
+      {!isOpen && (
+        <div className="flex flex-wrap items-center gap-3 px-4 py-2 bg-muted rounded-lg shadow-card border border-border/30">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-foreground">Chart:</span>
+            <span className="px-2 py-1 rounded bg-primary/10 text-primary text-xs font-medium uppercase">{chartType}</span>
           </div>
-
-          <Separator />
-
-          {/* Export Options */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-3 block">Export Chart</label>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onExportChart('png')}
-              >
-                <Download className="w-4 h-4 mr-1" />
-                PNG
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onExportChart('svg')}
-              >
-                <Download className="w-4 h-4 mr-1" />
-                SVG
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onExportChart('pdf')}
-              >
-                <Download className="w-4 h-4 mr-1" />
-                PDF
-              </Button>
-            </div>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-foreground">Theme:</span>
+            <span className="px-2 py-1 rounded bg-accent/10 text-accent text-xs font-medium uppercase">{colorTheme}</span>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-foreground">X:</span>
+            <span className="px-2 py-1 rounded bg-muted-foreground/10 text-muted-foreground text-xs font-medium">{selectedXAxis}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-foreground">Y:</span>
+            <span className="px-2 py-1 rounded bg-muted-foreground/10 text-muted-foreground text-xs font-medium">{selectedYAxis}</span>
+          </div>
+          <Button variant="outline" size="sm" className="ml-auto" onClick={() => setIsOpen(true)}>
+            Show Controls
+          </Button>
         </div>
       )}
     </Card>
