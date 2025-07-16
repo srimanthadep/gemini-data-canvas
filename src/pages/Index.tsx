@@ -309,16 +309,16 @@ const Index = () => {
         </Dialog>
       )}
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
       {!originalData.length ? (
           /* Upload State */
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8">
               <BarChart3 className="w-16 h-16 text-primary mx-auto mb-4" />
-              <h2 className="text-3xl font-bold text-foreground mb-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
                 Transform Your Data Into Insights
               </h2>
-              <p className="text-lg text-muted-foreground">
+              <p className="text-base sm:text-lg text-muted-foreground">
                 Upload your dataset and let AI help you discover patterns, trends, and actionable insights
               </p>
             </div>
@@ -327,9 +327,11 @@ const Index = () => {
         ) : !proceedToDashboard ? (
           // Data Preview State
           <div className="flex flex-col items-center justify-center min-h-screen w-full bg-background">
-            <div className="w-full max-w-7xl">
-              <h2 className="text-3xl font-bold text-foreground mb-6 text-center">Preview Your Data</h2>
-              <DataPreviewTable data={originalData} columns={columns} rowCount={10} />
+            <div className="w-full max-w-7xl px-2 sm:px-0">
+              <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6 text-center">Preview Your Data</h2>
+              <div className="overflow-x-auto w-full">
+                <DataPreviewTable data={originalData} columns={columns} rowCount={10} />
+              </div>
               <div className="flex justify-center mt-8">
                 <Button onClick={() => setProceedToDashboard(true)} size="lg">
                   Proceed to Dashboard
@@ -339,9 +341,9 @@ const Index = () => {
           </div>
         ) : (
           /* Enhanced Analytics Dashboard */
-          <div className="flex flex-col gap-6 min-h-[80vh]">
+          <div className="flex flex-col gap-4 sm:gap-6 min-h-[80vh]">
             {/* KPIs Row with Data Controls beside Dataset */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2 sm:gap-4 items-start">
               <div className="bg-gradient-card border border-border/50 rounded-lg p-3 shadow-card flex items-center gap-3 max-w-xs min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
                   <BarChart3 className="w-5 h-5 text-primary" />
@@ -427,31 +429,31 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            {/* Data Visualization - moved here for full width below KPIs */}
-            <div className="w-full mt-6">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-lg font-semibold text-foreground">Data Visualization</h3>
+            {/* Data Visualization - full width below KPIs */}
+            <div className="w-full mt-4 sm:mt-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 gap-2">
+                <h3 className="text-base sm:text-lg font-semibold text-foreground">Data Visualization</h3>
                 <Badge variant="secondary" className="text-xs">Interactive Charts</Badge>
               </div>
-              <div className="min-h-[350px]">
+              <div className="min-h-[250px] sm:min-h-[350px] overflow-x-auto">
                 <DataVisualization data={filteredData} columns={columns} />
               </div>
             </div>
             {/* Main Dashboard Row (Statistical Summary and AI Assistant) */}
-            <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0 items-stretch h-full">
+            <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 min-h-0 items-stretch h-full">
               {/* Center - Summary */}
-              <div className="flex-1 flex flex-col gap-6 h-full min-w-0">
+              <div className="flex-1 flex flex-col gap-4 sm:gap-6 h-full min-w-0">
                 <div className="flex-1 flex flex-col">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Statistical Summary</h3>
-                  <div className="flex-1">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground mb-2 sm:mb-4">Statistical Summary</h3>
+                  <div className="flex-1 overflow-x-auto">
                     <DataSummary data={filteredData} columns={columns} />
                   </div>
                 </div>
               </div>
               {/* Right Sidebar - AI Assistant */}
-              <div className="w-full lg:w-[380px] flex-shrink-0 flex flex-col h-full min-h-0">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">AI Assistant</h3>
+              <div className="w-full lg:w-[380px] flex-shrink-0 flex flex-col h-full min-h-0 mt-4 lg:mt-0">
+                <div className="flex items-center justify-between mb-2 sm:mb-4">
+                  <h3 className="text-base sm:text-lg font-semibold text-foreground">AI Assistant</h3>
                   <Badge variant="default" className="text-xs bg-gradient-primary">Powered by Gemini</Badge>
                 </div>
                 <div className="flex-1 h-full min-h-0 overflow-auto">
