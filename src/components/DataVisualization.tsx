@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ChartCustomization } from './ChartCustomization';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface DataVisualizationProps {
   data: any[];
@@ -23,6 +25,10 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
   const [chartSize, setChartSize] = useState(400);
   const [selectedXAxis, setSelectedXAxis] = useState('');
   const [selectedYAxis, setSelectedYAxis] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [chartTitle, setChartTitle] = useState('');
+  const [xAxisLabel, setXAxisLabel] = useState('');
+  const [yAxisLabel, setYAxisLabel] = useState('');
   const analysis = useMemo(() => {
     if (!data.length) return null;
 
@@ -63,11 +69,39 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
   }, [data, columns, selectedXAxis, selectedYAxis, chartType]);
 
   const currentColors = COLOR_THEMES[colorTheme as keyof typeof COLOR_THEMES];
+  const chartRef = useRef<HTMLDivElement>(null);
 
-  const handleExportChart = (format: string) => {
-    // This would implement chart export functionality
-    console.log(`Exporting chart as ${format}`);
-    // For now, just log - would need a library like html2canvas or jsPDF
+  const handleExportChart = async (format: string) => {
+    if (!chartRef.current) return;
+    setExporting(true);
+    try {
+      // Temporarily set fixed size for export
+      const chartDiv = chartRef.current;
+      const prevWidth = chartDiv.style.width;
+      const prevHeight = chartDiv.style.height;
+      chartDiv.style.width = '800px';
+      chartDiv.style.height = '400px';
+      const canvas = await html2canvas(chartDiv, { backgroundColor: null, useCORS: true });
+      chartDiv.style.width = prevWidth;
+      chartDiv.style.height = prevHeight;
+      if (format === 'png') {
+        const link = document.createElement('a');
+        link.download = `chart-export.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } else if (format === 'pdf') {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({ orientation: 'landscape' });
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth - 20, pdfHeight - 20);
+        pdf.save('chart-export.pdf');
+      }
+    } catch (err) {
+      alert('Failed to export chart. Please try again.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   if (!analysis || !data.length) {
@@ -80,13 +114,14 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
     );
   }
 
-  const renderChart = () => {
+  const renderChart = (labels?: { xAxisLabel?: string; yAxisLabel?: string }) => {
     const chartProps = {
       data: analysis.customData,
       width: "100%",
       height: chartSize
     };
-
+    const xLabel = labels?.xAxisLabel || analysis.xAxis;
+    const yLabel = labels?.yAxisLabel || analysis.yAxis;
     switch (chartType) {
       case 'bar':
         return (
@@ -97,8 +132,9 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
                 dataKey={analysis.xAxis}
                 stroke="hsl(var(--muted-foreground))"
                 fontSize={12}
+                label={{ value: xLabel, position: 'insideBottom', offset: -5, fill: 'hsl(var(--muted-foreground))', fontSize: 14 }}
               />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} label={{ value: yLabel, angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))', fontSize: 14 }} />
               <Tooltip 
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
@@ -114,7 +150,6 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
             </BarChart>
           </ResponsiveContainer>
         );
-
       case 'line':
         return (
           <ResponsiveContainer {...chartProps}>
@@ -124,8 +159,9 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
                 dataKey={analysis.xAxis}
                 stroke="hsl(var(--muted-foreground))"
                 fontSize={12}
+                label={{ value: xLabel, position: 'insideBottom', offset: -5, fill: 'hsl(var(--muted-foreground))', fontSize: 14 }}
               />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} label={{ value: yLabel, angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))', fontSize: 14 }} />
               <Tooltip 
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
@@ -143,7 +179,6 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
             </LineChart>
           </ResponsiveContainer>
         );
-
       case 'area':
         return (
           <ResponsiveContainer {...chartProps}>
@@ -153,8 +188,9 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
                 dataKey={analysis.xAxis}
                 stroke="hsl(var(--muted-foreground))"
                 fontSize={12}
+                label={{ value: xLabel, position: 'insideBottom', offset: -5, fill: 'hsl(var(--muted-foreground))', fontSize: 14 }}
               />
-              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+              <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} label={{ value: yLabel, angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))', fontSize: 14 }} />
               <Tooltip 
                 contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
@@ -172,7 +208,6 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
             </AreaChart>
           </ResponsiveContainer>
         );
-
       case 'pie':
         return (
           <ResponsiveContainer {...chartProps}>
@@ -200,7 +235,6 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
             </PieChart>
           </ResponsiveContainer>
         );
-
       default:
         return <div>Chart type not supported</div>;
     }
@@ -208,37 +242,77 @@ export function DataVisualization({ data, columns }: DataVisualizationProps) {
 
   return (
     <div className="space-y-6">
-      <ChartCustomization
-        chartType={chartType}
-        onChartTypeChange={setChartType}
-        colorTheme={colorTheme}
-        onColorThemeChange={setColorTheme}
-        chartSize={chartSize}
-        onChartSizeChange={setChartSize}
-        columns={columns}
-        selectedXAxis={selectedXAxis}
-        selectedYAxis={selectedYAxis}
-        onXAxisChange={setSelectedXAxis}
-        onYAxisChange={setSelectedYAxis}
-        onExportChart={handleExportChart}
-      />
-
-      <Card className="p-6 bg-gradient-card border-border/50 shadow-card">
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-foreground">Interactive Chart</h2>
-            <div className="flex gap-2 flex-wrap">
-              <Badge variant="secondary">{data.length} rows</Badge>
-              <Badge variant="secondary">{columns.length} columns</Badge>
-              <Badge variant="outline">
-                {analysis.xAxis} × {analysis.yAxis}
-              </Badge>
-            </div>
+      <Card className="p-8 bg-gradient-card border-border/50 shadow-card">
+        {/* Chart Title and Axis Labels Controls */}
+        <div className="mb-4 flex flex-col gap-2">
+          <input
+            type="text"
+            value={chartTitle}
+            onChange={e => setChartTitle(e.target.value)}
+            placeholder="Chart Title (e.g., Monthly Profit Report)"
+            className="px-3 py-2 rounded border border-border/50 bg-background text-foreground text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary/40"
+            aria-label="Chart title"
+          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={xAxisLabel}
+              onChange={e => setXAxisLabel(e.target.value)}
+              placeholder="X Axis Label"
+              className="px-2 py-1 rounded border border-border/50 bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              aria-label="X axis label"
+              style={{ minWidth: 120 }}
+            />
+            <input
+              type="text"
+              value={yAxisLabel}
+              onChange={e => setYAxisLabel(e.target.value)}
+              placeholder="Y Axis Label"
+              className="px-2 py-1 rounded border border-border/50 bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+              aria-label="Y axis label"
+              style={{ minWidth: 120 }}
+            />
           </div>
         </div>
-
-        <div className="w-full">
-          {renderChart()}
+        {/* Chart Customization and Export Controls */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-xs">Export Chart</Badge>
+            <button
+              className="px-3 py-1 rounded bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/80 transition"
+              onClick={() => handleExportChart('png')}
+              aria-label="Export chart as PNG"
+              disabled={exporting}
+            >{exporting ? 'Exporting...' : 'PNG'}</button>
+            <button
+              className="px-3 py-1 rounded bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/80 transition"
+              onClick={() => handleExportChart('pdf')}
+              aria-label="Export chart as PDF"
+              disabled={exporting}
+            >{exporting ? 'Exporting...' : 'PDF'}</button>
+          </div>
+          <ChartCustomization
+            chartType={chartType}
+            onChartTypeChange={setChartType}
+            colorTheme={colorTheme}
+            onColorThemeChange={setColorTheme}
+            chartSize={chartSize}
+            onChartSizeChange={setChartSize}
+            columns={columns}
+            selectedXAxis={selectedXAxis}
+            selectedYAxis={selectedYAxis}
+            onXAxisChange={setSelectedXAxis}
+            onYAxisChange={setSelectedYAxis}
+            onExportChart={handleExportChart}
+          />
+        </div>
+        <div ref={chartRef} className="bg-white rounded-lg p-4 flex items-center justify-center" style={{ width: exporting ? 800 : '100%', height: exporting ? 400 : chartSize }}>
+          <div className="w-full">
+            {chartTitle && (
+              <div className="text-center text-lg font-bold mb-2 text-foreground">{chartTitle}</div>
+            )}
+            {renderChart({ xAxisLabel, yAxisLabel })}
+          </div>
         </div>
       </Card>
     </div>

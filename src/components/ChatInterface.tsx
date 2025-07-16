@@ -29,6 +29,18 @@ export function ChatInterface({ data, dataColumns }: ChatInterfaceProps) {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Example prompts for users
+  const examplePrompts = [
+    'What are the top 5 categories in my data?',
+    'Show me a summary of numeric columns.',
+    'Are there any outliers in the dataset?',
+    'What trends can you find in the data?',
+    'Suggest a chart for visualizing this data.',
+    'How many unique values are in each column?',
+    'What is the average of column X?',
+    'Find missing values in the dataset.'
+  ];
+
   const sendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
@@ -122,13 +134,31 @@ Please provide a helpful analysis or answer based on this data context. Be speci
       </div>
 
       <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
+        {/* Example Prompts */}
+        <div className="mb-4">
+          <div className="text-xs text-muted-foreground mb-1">Try asking:</div>
+          <div className="flex flex-wrap gap-2">
+            {examplePrompts.map((prompt, idx) => (
+              <button
+                key={idx}
+                className="px-2 py-1 rounded border border-border/50 text-xs text-foreground bg-background hover:bg-muted transition focus:outline-none focus:ring-2 focus:ring-primary/40"
+                onClick={() => setInputValue(prompt)}
+                type="button"
+                aria-label={`Use example prompt: ${prompt}`}
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-4" role="list">
           {messages.map((message) => (
             <div
               key={message.id}
               className={`flex gap-3 ${
                 message.type === 'user' ? 'flex-row-reverse' : 'flex-row'
               }`}
+              role="listitem"
             >
               <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                 message.type === 'user' 
@@ -179,11 +209,13 @@ Please provide a helpful analysis or answer based on this data context. Be speci
             placeholder="Ask me anything about your data..."
             className="flex-1"
             disabled={isLoading}
+            aria-label="Chat input: Ask me anything about your data"
           />
           <Button 
             onClick={sendMessage} 
             disabled={!inputValue.trim() || isLoading}
             className="bg-gradient-primary hover:opacity-90"
+            aria-label="Send message"
           >
             <Send className="w-4 h-4" />
           </Button>

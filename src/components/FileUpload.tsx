@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import { Upload, File, CheckCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Papa from 'papaparse';
+import { toast } from '@/components/ui/use-toast';
 
 interface FileUploadProps {
   onFileUpload: (data: any[], fileName: string) => void;
@@ -11,40 +13,48 @@ export function FileUpload({ onFileUpload }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFile = useCallback(async (file: File) => {
     if (!file) return;
-    
+    setError(null);
     setIsProcessing(true);
-    
     try {
+      // Validate file type and size
+      if (!file.name.endsWith('.csv')) {
+        setError('Only CSV files are supported.');
+        toast({ title: 'Upload Error', description: 'Only CSV files are supported.', variant: 'destructive' });
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        setError('File size exceeds 10MB limit.');
+        toast({ title: 'Upload Error', description: 'File size exceeds 10MB limit.', variant: 'destructive' });
+        return;
+      }
       const text = await file.text();
-      let data: any[] = [];
-      
-      if (file.name.endsWith('.csv')) {
-        // Simple CSV parsing
-        const lines = text.split('\n').filter(line => line.trim());
-        const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-        
-        data = lines.slice(1).map(line => {
-          const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
-          const row: any = {};
-          headers.forEach((header, index) => {
-            const value = values[index] || '';
-            // Auto-detect numeric values
-            const numValue = parseFloat(value);
-            row[header] = !isNaN(numValue) && value !== '' ? numValue : value;
-          });
-          return row;
-        });
+      // Use PapaParse for robust CSV parsing
+      const result = Papa.parse(text, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: true,
+      });
+      if (result.errors.length > 0) {
+        setError('Malformed CSV: ' + result.errors[0].message);
+        toast({ title: 'Upload Error', description: 'Malformed CSV: ' + result.errors[0].message, variant: 'destructive' });
+        return;
       }
-      
-      if (data.length > 0) {
-        onFileUpload(data, file.name);
-        setUploadedFile(file.name);
+      const data = result.data as any[];
+      if (!data.length || Object.keys(data[0]).length === 0) {
+        setError('CSV must have headers and at least one data row.');
+        toast({ title: 'Upload Error', description: 'CSV must have headers and at least one data row.', variant: 'destructive' });
+        return;
       }
+      onFileUpload(data, file.name);
+      setUploadedFile(file.name);
+      toast({ title: 'File Uploaded', description: `${file.name} uploaded successfully.`, variant: 'default' });
     } catch (error) {
-      console.error('Error processing file:', error);
+      setError('Error processing file. Please check your CSV and try again.');
+      toast({ title: 'Upload Error', description: 'Error processing file. Please check your CSV and try again.', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
@@ -79,6 +89,8 @@ export function FileUpload({ onFileUpload }: FileUploadProps) {
         onDragOver={(e) => e.preventDefault()}
         onDragEnter={() => setIsDragging(true)}
         onDragLeave={() => setIsDragging(false)}
+        role="region"
+        aria-label="File upload area. Drag and drop your CSV file here or click to browse."
       >
         {uploadedFile ? (
           <div className="space-y-4">
@@ -115,12 +127,16 @@ export function FileUpload({ onFileUpload }: FileUploadProps) {
                   <p className="text-muted-foreground mb-4">
                     Drag and drop your CSV file here, or click to browse
                   </p>
+                  {error && (
+                    <div className="text-red-600 text-sm font-medium mb-2">{error}</div>
+                  )}
                 </div>
                 <div className="space-y-3">
                   <Button 
                     variant="default"
                     className="bg-gradient-primary hover:opacity-90"
                     onClick={() => document.getElementById('file-input')?.click()}
+                    aria-label="Choose file to upload"
                   >
                     <File className="w-4 h-4 mr-2" />
                     Choose File
@@ -140,6 +156,7 @@ export function FileUpload({ onFileUpload }: FileUploadProps) {
           accept=".csv"
           onChange={handleFileInput}
           className="hidden"
+          aria-label="CSV file input"
         />
       </div>
     </Card>

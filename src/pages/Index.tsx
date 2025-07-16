@@ -1,18 +1,38 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FileUpload } from '@/components/FileUpload';
 import { DataSummary } from '@/components/DataSummary';
 import { DataVisualization } from '@/components/DataVisualization';
 import { DataFilter } from '@/components/DataFilter';
 import { ChatInterface } from '@/components/ChatInterface';
-import { Brain, BarChart3, Filter, Download } from 'lucide-react';
+import { DataPreviewTable } from '@/components/DataPreviewTable';
+import { Brain, BarChart3, Filter, Download, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { debounce } from '@/lib/utils';
 
 const Index = () => {
   const [originalData, setOriginalData] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [fileName, setFileName] = useState<string>('');
   const [columns, setColumns] = useState<string[]>([]);
+  const [proceedToDashboard, setProceedToDashboard] = useState(false);
+
+  // Theme toggle logic
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') || 'light';
+    }
+    return 'light';
+  });
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   const handleFileUpload = (uploadedData: any[], uploadedFileName: string) => {
     setOriginalData(uploadedData);
@@ -21,8 +41,10 @@ const Index = () => {
     setColumns(uploadedData.length > 0 ? Object.keys(uploadedData[0]) : []);
   };
 
+  // Debounced filter handler
+  const debouncedSetFilteredData = React.useRef(debounce((data: any[]) => setFilteredData(data), 300)).current;
   const handleFilterChange = (newFilteredData: any[]) => {
-    setFilteredData(newFilteredData);
+    debouncedSetFilteredData(newFilteredData);
   };
 
   const exportData = (format: string) => {
@@ -42,6 +64,14 @@ const Index = () => {
     }
   };
 
+  // Quick filter presets
+  const applyTop10 = () => setFilteredData(filteredData.slice(0, 10));
+  const applyRemoveNulls = () => {
+    setFilteredData(filteredData.filter(row =>
+      Object.values(row).every(val => val !== null && val !== '' && val !== undefined)
+    ));
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -57,7 +87,14 @@ const Index = () => {
                 <p className="text-muted-foreground">Intelligent data analysis with conversational insights</p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={toggleTheme}
+                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                className="rounded-full p-2 border border-border/50 bg-background hover:bg-muted transition focus:outline-none focus:ring-2 focus:ring-primary/40"
+              >
+                {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-blue-600" />}
+              </button>
               <p className="text-sm text-muted-foreground">by Srimanth Adep</p>
             </div>
           </div>
@@ -79,122 +116,127 @@ const Index = () => {
             </div>
             <FileUpload onFileUpload={handleFileUpload} />
           </div>
-        ) : (
-          /* Enhanced Analytics Dashboard */
-          <div className="space-y-6">
-            {/* Dashboard Header with KPIs */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-gradient-card border border-border/50 rounded-lg p-4 shadow-card">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                    <BarChart3 className="w-5 h-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Rows</p>
-                    <p className="text-2xl font-bold text-foreground">{originalData.length.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-card border border-border/50 rounded-lg p-4 shadow-card">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
-                    <Filter className="w-5 h-5 text-accent" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Filtered Rows</p>
-                    <p className="text-2xl font-bold text-foreground">{filteredData.length.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-card border border-border/50 rounded-lg p-4 shadow-card">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-success/20 flex items-center justify-center">
-                    <Brain className="w-5 h-5 text-success" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Columns</p>
-                    <p className="text-2xl font-bold text-foreground">{columns.length}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-gradient-card border border-border/50 rounded-lg p-4 shadow-card">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center">
-                    <Download className="w-5 h-5 text-warning" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Dataset</p>
-                    <p className="text-lg font-semibold text-foreground truncate" title={fileName}>
-                      {fileName.length > 12 ? `${fileName.substring(0, 12)}...` : fileName}
-                    </p>
-                  </div>
-                </div>
+        ) : !proceedToDashboard ? (
+          // Data Preview State
+          <div className="flex flex-col items-center justify-center min-h-screen w-full bg-background">
+            <div className="w-full max-w-7xl">
+              <h2 className="text-3xl font-bold text-foreground mb-6 text-center">Preview Your Data</h2>
+              <DataPreviewTable data={originalData} columns={columns} rowCount={10} />
+              <div className="flex justify-center mt-8">
+                <Button onClick={() => setProceedToDashboard(true)} size="lg">
+                  Proceed to Dashboard
+                </Button>
               </div>
             </div>
-
-            {/* Main Dashboard Content */}
-            <div className="grid lg:grid-cols-12 gap-6">
-              {/* Left Panel - Filters & Controls */}
-              <div className="lg:col-span-3 space-y-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-foreground">Data Controls</h3>
+          </div>
+        ) : (
+          /* Enhanced Analytics Dashboard */
+          <div className="flex flex-col gap-6 min-h-[80vh]">
+            {/* KPIs Row with Data Controls beside Dataset */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-start">
+              <div className="bg-gradient-card border border-border/50 rounded-lg p-3 shadow-card flex items-center gap-3 max-w-xs min-w-0">
+                <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Total Rows</p>
+                  <p className="text-2xl font-bold text-foreground">{originalData.length.toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="bg-gradient-card border border-border/50 rounded-lg p-3 shadow-card flex items-center gap-3 max-w-xs min-w-0">
+                <div className="w-10 h-10 rounded-lg bg-accent/20 flex items-center justify-center">
+                  <Filter className="w-5 h-5 text-accent" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Filtered Rows</p>
+                  <p className="text-2xl font-bold text-foreground">{filteredData.length.toLocaleString()}</p>
+                </div>
+              </div>
+              <div className="bg-gradient-card border border-border/50 rounded-lg p-3 shadow-card flex items-center gap-3 max-w-xs min-w-0">
+                <div className="w-10 h-10 rounded-lg bg-success/20 flex items-center justify-center">
+                  <Brain className="w-5 h-5 text-success" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Columns</p>
+                  <p className="text-2xl font-bold text-foreground">{columns.length}</p>
+                </div>
+              </div>
+              <div className="bg-gradient-card border border-border/50 rounded-lg p-3 shadow-card flex items-center gap-3 max-w-xs min-w-0">
+                <div className="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center">
+                  <Download className="w-5 h-5 text-warning" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Dataset</p>
+                  <p className="text-lg font-semibold text-foreground truncate" title={fileName}>
+                    {fileName.length > 12 ? `${fileName.substring(0, 12)}...` : fileName}
+                  </p>
+                </div>
+              </div>
+              {/* Data Controls beside Dataset */}
+              <div className="flex flex-col gap-2 min-w-[180px]">
+                <div className="flex items-center justify-between gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => exportData('csv')}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 px-2 min-w-0 text-xs"
                   >
                     <Download className="w-3 h-3" />
                     Export
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-1 px-2 min-w-0 text-xs"
+                    onClick={() => {
+                      setOriginalData([]);
+                      setFilteredData([]);
+                      setFileName('');
+                      setColumns([]);
+                      setProceedToDashboard(false);
+                    }}
+                  >
+                    Upload
+                  </Button>
                 </div>
-                <DataFilter 
-                  data={originalData} 
-                  columns={columns} 
-                  onFilterChange={handleFilterChange}
-                />
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setOriginalData([]);
-                    setFilteredData([]);
-                    setFileName('');
-                    setColumns([]);
-                  }}
-                >
-                  Upload New Dataset
-                </Button>
+                <div>
+                  <DataFilter 
+                    data={originalData} 
+                    columns={columns} 
+                    onFilterChange={handleFilterChange}
+                  />
+                </div>
               </div>
-
-              {/* Center Panel - Visualizations */}
-              <div className="lg:col-span-6 space-y-6">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-foreground">Data Visualization</h3>
-                  <Badge variant="secondary" className="text-xs">
-                    Interactive Charts
-                  </Badge>
+            </div>
+            {/* Main Dashboard Row */}
+            <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0 items-stretch h-full">
+              {/* Center - Visualization and Summary */}
+              <div className="flex-1 flex flex-col gap-6 h-full min-w-0">
+                <div className="flex-1 flex flex-col">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold text-foreground">Data Visualization</h3>
+                    <Badge variant="secondary" className="text-xs">Interactive Charts</Badge>
+                  </div>
+                  <div className="flex-1 min-h-[350px]">
+                    <DataVisualization data={filteredData} columns={columns} />
+                  </div>
                 </div>
-                <DataVisualization data={filteredData} columns={columns} />
-                
-                <div className="mt-6">
+                <div className="flex-1 flex flex-col">
                   <h3 className="text-lg font-semibold text-foreground mb-4">Statistical Summary</h3>
-                  <DataSummary data={filteredData} columns={columns} />
+                  <div className="flex-1">
+                    <DataSummary data={filteredData} columns={columns} />
+                  </div>
                 </div>
               </div>
-
-              {/* Right Panel - AI Assistant */}
-              <div className="lg:col-span-3">
+              {/* Right Sidebar - AI Assistant */}
+              <div className="w-full lg:w-[380px] flex-shrink-0 flex flex-col h-full min-h-0">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-foreground">AI Assistant</h3>
-                  <Badge variant="default" className="text-xs bg-gradient-primary">
-                    Powered by Gemini
-                  </Badge>
+                  <Badge variant="default" className="text-xs bg-gradient-primary">Powered by Gemini</Badge>
                 </div>
-                <ChatInterface data={filteredData} dataColumns={columns} />
+                <div className="flex-1 h-full min-h-0 overflow-auto">
+                  <ChatInterface data={filteredData} dataColumns={columns} />
+                </div>
               </div>
             </div>
           </div>
