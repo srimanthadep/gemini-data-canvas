@@ -5,10 +5,13 @@ import { DataVisualization } from '@/components/DataVisualization';
 import { DataFilter } from '@/components/DataFilter';
 import { ChatInterface } from '@/components/ChatInterface';
 import { DataPreviewTable } from '@/components/DataPreviewTable';
-import { Brain, BarChart3, Filter, Download, Moon, Sun } from 'lucide-react';
+import { Brain, BarChart3, Filter, Download, Moon, Sun, Info, Undo2, Redo2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { debounce } from '@/lib/utils';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose, DialogFooter } from '@/components/ui/dialog';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { toast } from '@/components/ui/use-toast';
 
 const Index = () => {
   const [originalData, setOriginalData] = useState<any[]>([]);
@@ -72,6 +75,122 @@ const Index = () => {
     ));
   };
 
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('onboardingComplete') !== 'true';
+    }
+    return true;
+  });
+  const handleCloseOnboarding = () => {
+    setShowOnboarding(false);
+    localStorage.setItem('onboardingComplete', 'true');
+  };
+
+  // Filter and chart customization state/undo/redo
+  const [filters, setFilters] = useState([]);
+  const [filterUndoStack, setFilterUndoStack] = useState([]);
+  const [filterRedoStack, setFilterRedoStack] = useState([]);
+  const [chartState, setChartState] = useState({
+    chartType: 'bar',
+    colorTheme: 'primary',
+    chartSize: 400,
+    selectedXAxis: '',
+    selectedYAxis: '',
+    chartTitle: '',
+    xAxisLabel: '',
+    yAxisLabel: ''
+  });
+  const [chartUndoStack, setChartUndoStack] = useState([]);
+  const [chartRedoStack, setChartRedoStack] = useState([]);
+
+  // Filter undo/redo handlers
+  const handleSetFilters = (newFilters) => {
+    setFilterUndoStack((stack) => [...stack, filters]);
+    setFilterRedoStack([]);
+    setFilters(newFilters);
+  };
+  const handleUndoFilter = () => {
+    if (filterUndoStack.length) {
+      setFilterRedoStack((stack) => [filters, ...stack]);
+      const prev = filterUndoStack[filterUndoStack.length - 1];
+      setFilters(prev);
+      setFilterUndoStack((stack) => stack.slice(0, -1));
+      toast({ title: 'Undo filter', description: 'Reverted to previous filter state.' });
+    }
+  };
+  const handleRedoFilter = () => {
+    if (filterRedoStack.length) {
+      setFilterUndoStack((stack) => [...stack, filters]);
+      const next = filterRedoStack[0];
+      setFilters(next);
+      setFilterRedoStack((stack) => stack.slice(1));
+      toast({ title: 'Redo filter', description: 'Reapplied filter state.' });
+    }
+  };
+
+  // Chart customization undo/redo handlers
+  const handleSetChartState = (newState) => {
+    setChartUndoStack((stack) => [...stack, chartState]);
+    setChartRedoStack([]);
+    setChartState(newState);
+  };
+  const handleUndoChart = () => {
+    if (chartUndoStack.length) {
+      setChartRedoStack((stack) => [chartState, ...stack]);
+      const prev = chartUndoStack[chartUndoStack.length - 1];
+      setChartState(prev);
+      setChartUndoStack((stack) => stack.slice(0, -1));
+      toast({ title: 'Undo chart change', description: 'Reverted to previous chart state.' });
+    }
+  };
+  const handleRedoChart = () => {
+    if (chartRedoStack.length) {
+      setChartUndoStack((stack) => [...stack, chartState]);
+      const next = chartRedoStack[0];
+      setChartState(next);
+      setChartRedoStack((stack) => stack.slice(1));
+      toast({ title: 'Redo chart change', description: 'Reapplied chart state.' });
+    }
+  };
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        toggleTheme();
+        toast({ title: 'Theme switched', description: `Now in ${theme === 'dark' ? 'light' : 'dark'} mode.` });
+      }
+      if (e.ctrlKey && e.key.toLowerCase() === 'e') {
+        e.preventDefault();
+        if (filteredData.length && columns.length) {
+          exportData('csv');
+          toast({ title: 'Exported CSV', description: 'Filtered data exported as CSV.' });
+        }
+      }
+      if (e.ctrlKey && e.key.toLowerCase() === 'u') {
+        e.preventDefault();
+        setOriginalData([]);
+        setFilteredData([]);
+        setFileName('');
+        setColumns([]);
+        setProceedToDashboard(false);
+        toast({ title: 'Upload triggered', description: 'Ready to upload a new dataset.' });
+      }
+      if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        handleUndoFilter();
+        handleUndoChart();
+      }
+      if (e.ctrlKey && e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        handleRedoFilter();
+        handleRedoChart();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [theme, filteredData, columns, filterUndoStack, filterRedoStack, chartUndoStack, chartRedoStack]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -83,23 +202,112 @@ const Index = () => {
                 <Brain className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">AI Analytics Platform</h1>
+                <h1 className="text-2xl font-bold text-foreground">Dashbord.AI</h1>
                 <p className="text-muted-foreground">Intelligent data analysis with conversational insights</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <button
-                onClick={toggleTheme}
-                aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                className="rounded-full p-2 border border-border/50 bg-background hover:bg-muted transition focus:outline-none focus:ring-2 focus:ring-primary/40"
-              >
-                {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-blue-600" />}
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={toggleTheme}
+                    aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                    className="rounded-full p-2 border border-border/50 bg-background hover:bg-muted transition focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  >
+                    {theme === 'dark' ? <Sun className="w-5 h-5 text-yellow-400" /> : <Moon className="w-5 h-5 text-blue-600" />}
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}</TooltipContent>
+              </Tooltip>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="icon" aria-label="Show help / onboarding">
+                    <span className="sr-only">Show help</span>
+                    <Brain className="w-5 h-5 text-primary" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Welcome to Dashbord.AI!</DialogTitle>
+                    <DialogDescription>
+                      <ul className="list-disc pl-6 space-y-2 mt-4 text-left">
+                        <li><b>Upload Data:</b> Start by uploading a CSV file to preview and analyze your data.</li>
+                        <li><b>Data Preview:</b> See a quick preview of your dataset before diving into analysis.</li>
+                        <li><b>Dashboard:</b> Explore interactive charts, KPIs, and statistical summaries.</li>
+                        <li><b>AI Assistant:</b> Ask questions about your data or request insights using natural language.</li>
+                        <li><b>Filters:</b> Use advanced filters and quick presets to focus your analysis.</li>
+                        <li><b>Export:</b> Download filtered data or charts as CSV, PNG, or PDF.</li>
+                        <li><b>Theme Switch:</b> Toggle between light and dark mode for your comfort.</li>
+                        <li><b>Accessibility:</b> Fully keyboard accessible and screen reader friendly.</li>
+                      </ul>
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button onClick={handleCloseOnboarding}>Get Started</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="icon" aria-label="Show keyboard shortcuts">
+                    <span className="sr-only">Show keyboard shortcuts</span>
+                    <Info className="w-5 h-5 text-accent" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Keyboard Shortcuts</DialogTitle>
+                    <DialogDescription>
+                      <ul className="list-disc pl-6 space-y-2 mt-4 text-left">
+                        <li><b>Ctrl + K</b>: Toggle theme (light/dark)</li>
+                        <li><b>Ctrl + E</b>: Export filtered data as CSV</li>
+                        <li><b>Ctrl + U</b>: Upload new dataset (reset)</li>
+                        <li><b>Ctrl + Z</b>: Undo last filter/chart change</li>
+                        <li><b>Ctrl + Y</b>: Redo last filter/chart change</li>
+                      </ul>
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button>Close</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               <p className="text-sm text-muted-foreground">by Srimanth Adep</p>
             </div>
           </div>
         </div>
       </header>
+      {/* Onboarding modal on first visit */}
+      {showOnboarding && (
+        <Dialog open={showOnboarding} onOpenChange={setShowOnboarding}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Welcome to Dashbord.AI!</DialogTitle>
+              <DialogDescription>
+                <ul className="list-disc pl-6 space-y-2 mt-4 text-left">
+                  <li><b>Upload Data:</b> Start by uploading a CSV file to preview and analyze your data.</li>
+                  <li><b>Data Preview:</b> See a quick preview of your dataset before diving into analysis.</li>
+                  <li><b>Dashboard:</b> Explore interactive charts, KPIs, and statistical summaries.</li>
+                  <li><b>AI Assistant:</b> Ask questions about your data or request insights using natural language.</li>
+                  <li><b>Filters:</b> Use advanced filters and quick presets to focus your analysis.</li>
+                  <li><b>Export:</b> Download filtered data or charts as CSV, PNG, or PDF.</li>
+                  <li><b>Theme Switch:</b> Toggle between light and dark mode for your comfort.</li>
+                  <li><b>Accessibility:</b> Fully keyboard accessible and screen reader friendly.</li>
+                </ul>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button onClick={handleCloseOnboarding}>Get Started</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <div className="container mx-auto px-4 py-8">
       {!originalData.length ? (
@@ -175,15 +383,20 @@ const Index = () => {
               {/* Data Controls beside Dataset */}
               <div className="flex flex-col gap-2 min-w-[180px]">
                 <div className="flex items-center justify-between gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => exportData('csv')}
-                    className="flex items-center gap-1 px-2 min-w-0 text-xs"
-                  >
-                    <Download className="w-3 h-3" />
-                    Export
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => exportData('csv')}
+                        className="flex items-center gap-1 px-2 min-w-0 text-xs"
+                      >
+                        <Download className="w-3 h-3" />
+                        Export
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Export data as CSV</TooltipContent>
+                  </Tooltip>
                   <Button
                     variant="outline"
                     size="sm"
@@ -199,6 +412,12 @@ const Index = () => {
                     Upload
                   </Button>
                 </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <Button variant="outline" size="icon" onClick={handleUndoFilter} disabled={!filterUndoStack.length} aria-label="Undo filter"><Undo2 /></Button>
+                  <Button variant="outline" size="icon" onClick={handleRedoFilter} disabled={!filterRedoStack.length} aria-label="Redo filter"><Redo2 /></Button>
+                  <Button variant="outline" size="icon" onClick={handleUndoChart} disabled={!chartUndoStack.length} aria-label="Undo chart"><Undo2 /></Button>
+                  <Button variant="outline" size="icon" onClick={handleRedoChart} disabled={!chartRedoStack.length} aria-label="Redo chart"><Redo2 /></Button>
+                </div>
                 <div>
                   <DataFilter 
                     data={originalData} 
@@ -208,19 +427,20 @@ const Index = () => {
                 </div>
               </div>
             </div>
-            {/* Main Dashboard Row */}
+            {/* Data Visualization - moved here for full width below KPIs */}
+            <div className="w-full mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-lg font-semibold text-foreground">Data Visualization</h3>
+                <Badge variant="secondary" className="text-xs">Interactive Charts</Badge>
+              </div>
+              <div className="min-h-[350px]">
+                <DataVisualization data={filteredData} columns={columns} />
+              </div>
+            </div>
+            {/* Main Dashboard Row (Statistical Summary and AI Assistant) */}
             <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0 items-stretch h-full">
-              {/* Center - Visualization and Summary */}
+              {/* Center - Summary */}
               <div className="flex-1 flex flex-col gap-6 h-full min-w-0">
-                <div className="flex-1 flex flex-col">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-foreground">Data Visualization</h3>
-                    <Badge variant="secondary" className="text-xs">Interactive Charts</Badge>
-                  </div>
-                  <div className="flex-1 min-h-[350px]">
-                    <DataVisualization data={filteredData} columns={columns} />
-                  </div>
-                </div>
                 <div className="flex-1 flex flex-col">
                   <h3 className="text-lg font-semibold text-foreground mb-4">Statistical Summary</h3>
                   <div className="flex-1">
